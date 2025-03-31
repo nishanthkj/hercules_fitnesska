@@ -5,16 +5,18 @@ import { getUserFromToken } from '@/lib/auth';
 // GET: Retrieve user by ID
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   const user = await getUserFromToken();
+  
   if (!user || user.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const userData = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         name: true,
@@ -29,7 +31,7 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, user: userData });
-  } catch {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to retrieve user' },
       { status: 500 }
@@ -40,9 +42,11 @@ export async function GET(
 // PUT: Update user by ID
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   const user = await getUserFromToken();
+  
   if (!user || user.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -51,12 +55,12 @@ export async function PUT(
     const { name, email, role } = await req.json();
 
     const updatedUser = await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data: { name, email, role },
     });
 
     return NextResponse.json({ success: true, user: updatedUser });
-  } catch {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to update user' },
       { status: 500 }
@@ -67,20 +71,22 @@ export async function PUT(
 // DELETE: Remove user by ID
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   const user = await getUserFromToken();
+  
   if (!user || user.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     await prisma.user.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true, message: 'User deleted successfully' });
-  } catch {
+  } catch  {
     return NextResponse.json(
       { error: 'Failed to delete user' },
       { status: 500 }

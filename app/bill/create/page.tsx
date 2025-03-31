@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Plus, Minus } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";  // Correct for App Router
 
 type Item = {
   id: string;
@@ -29,6 +30,7 @@ export default function CreateBillPage() {
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [search, setSearch] = useState("");
   const [itemIndex, setItemIndex] = useState(0);
+  const [isClient, setIsClient] = useState(false);  // Track if we're on the client-side
 
   const [form, setForm] = useState({
     invoiceNo: "",
@@ -47,6 +49,13 @@ export default function CreateBillPage() {
     paid: false,
     gstAmount: 0, // 👈 Allow editable GST
   });
+
+  const router = useRouter();  // Using useRouter from next/navigation for App Router
+
+  // Ensure the hook only runs on the client-side
+  useEffect(() => {
+    setIsClient(true);  // Only set to true after the component mounts (client-side)
+  }, []);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -111,6 +120,11 @@ export default function CreateBillPage() {
 
     if (res.ok) {
       toast.success("✅ Bill created!");
+      const createdBill = await res.json(); // Assuming your API returns the created bill data
+      const billId = createdBill.id; // Get the ID of the newly created bill
+
+      // Navigate to the newly created bill page
+      router.push(`/bill/${billId}`);
       setForm({
         invoiceNo: "",
         customerName: "",
@@ -135,6 +149,8 @@ export default function CreateBillPage() {
   };
 
   const currentItem = filteredItems[itemIndex];
+
+  if (!isClient) return null;  // Ensure nothing is rendered before client-side mount
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
